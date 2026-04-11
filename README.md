@@ -187,7 +187,7 @@ web/                               # Versión web
 
 ---
 
-## � Autores
+## 👥 Autores
 
 - **Jorge Ivan Jaramillo** - [GitHub](https://github.com/jorge-222)
 - **Juan Esteban Vergara**
