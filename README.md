@@ -196,15 +196,3 @@ Este proyecto está bajo licencia MIT.
 ## 👥 Autor
 
 **Jorge Ivan Jaramillo** - [GitHub](https://github.com/jorge-222)
-
----
-
-## 🤝 Contribuciones
-
-Las contribuciones son bienvenidas. Para cambios importantes, abre primero un issue para discutir los cambios propuestos.
-
----
-
-## 📞 Soporte
-
-Si tienes problemas o preguntas, abre un [issue](https://github.com/jorge-222/proyecto_moviles_scaner_qr/issues) en GitHub.
