@@ -187,12 +187,7 @@ web/                               # Versión web
 
 ---
 
-## 📝 Licencia
+## � Autores
 
-Este proyecto está bajo licencia MIT.
-
----
-
-## 👥 Autor
-
-**Jorge Ivan Jaramillo** - [GitHub](https://github.com/jorge-222)
+- **Jorge Ivan Jaramillo** - [GitHub](https://github.com/jorge-222)
+- **Juan Esteban Vergara**
