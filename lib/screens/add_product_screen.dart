@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../models/product.dart';
 import '../models/variant.dart';
@@ -27,7 +28,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
     if (widget.product != null) {
       _nombreController.text = widget.product!.nombre;
       _descripcionController.text = widget.product!.descripcion ?? '';
-      _precioController.text = widget.product!.precio.toString();
+      // Formatear precio inicial con puntos de miles
+      String priceStr = widget.product!.precio.toInt().toString();
+      RegExp reg = RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))');
+      _precioController.text = priceStr.replaceAllMapped(reg, (Match m) => '${m[1]}.');
       _variantes = List.from(widget.product!.variantes);
     } else {
       _variantes = [];
@@ -69,7 +73,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         id: widget.product?.id,
         nombre: _nombreController.text,
         descripcion: _descripcionController.text,
-        precio: double.tryParse(_precioController.text) ?? 0.0,
+        precio: double.tryParse(_precioController.text.replaceAll('.', '')) ?? 0.0,
         variantes: _variantes,
       );
 
@@ -134,7 +138,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                   prefixIcon: const Icon(Icons.attach_money),
                 ),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  CurrencyInputFormatter(),
+                ],
               ),
               const SizedBox(height: 24),
               Container(
@@ -311,5 +319,37 @@ class _VariantDialogState extends State<_VariantDialog> {
         ),
       ],
     );
+  }
+}
+
+class CurrencyInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    if (newValue.text.isEmpty) return newValue;
+
+    // Solo números
+    String digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.isEmpty) return newValue.copyWith(text: '');
+
+    // Formatear con puntos de miles
+    final String formatted = _formatThousands(digits);
+
+    return newValue.copyWith(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+
+  String _formatThousands(String digits) {
+    // Invertimos el string para poner los puntos cada 3 dígitos
+    String reversed = digits.split('').reversed.join();
+    List<String> chunks = [];
+    for (int i = 0; i < reversed.length; i += 3) {
+      int end = i + 3;
+      if (end > reversed.length) end = reversed.length;
+      chunks.add(reversed.substring(i, end));
+    }
+    // Volvemos a invertir y unir con puntos
+    return chunks.join('.').split('').reversed.join();
   }
 }
