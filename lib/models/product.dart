@@ -6,6 +6,7 @@ class Product {
   late String nombre;
   late String? descripcion;
   late double precio;
+  late String? categoria;
   late List<Variant> variantes; // Talla × Color
   late DateTime fechaCreacion;
 
@@ -14,6 +15,7 @@ class Product {
     required this.nombre,
     this.descripcion,
     this.precio = 0.0,
+    this.categoria,
     List<Variant>? variantes,
   }) {
     this.id = id ?? const Uuid().v4();
@@ -32,6 +34,7 @@ class Product {
       'nombre': nombre,
       'descripcion': descripcion,
       'precio': precio,
+      'categoria': categoria,
       'variantes': variantes.map((v) => v.toJson()).toList(),
       'fechaCreacion': fechaCreacion.toIso8601String(),
     };
@@ -48,6 +51,7 @@ class Product {
       nombre: json['nombre'] as String,
       descripcion: json['descripcion'] as String?,
       precio: (json['precio'] as num?)?.toDouble() ?? 0.0,
+      categoria: json['categoria'] as String?,
       variantes: variantes,
     )..fechaCreacion = json['fechaCreacion'] != null
         ? DateTime.parse(json['fechaCreacion'] as String)

@@ -34,6 +34,7 @@ class SyncService {
           nombre: row['nombre'] as String,
           descripcion: row['descripcion'] as String?,
           precio: (row['precio'] as num?)?.toDouble() ?? 0.0,
+          categoria: row['categoria'] as String?,
           variantes: variants,
         )..fechaCreacion = row['fecha_creacion'] != null
             ? DateTime.parse(row['fecha_creacion'] as String)
@@ -58,6 +59,7 @@ class SyncService {
         'nombre': product.nombre,
         'descripcion': product.descripcion,
         'precio': product.precio,
+        'categoria': product.categoria,
         'fecha_creacion': product.fechaCreacion.toIso8601String(),
       });
 

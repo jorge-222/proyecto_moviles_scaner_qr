@@ -2,22 +2,27 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 import '../models/product.dart';
+import '../models/inventory_log.dart';
 import 'sync_service.dart';
 
 class ProductService extends ChangeNotifier {
   static const String _key = 'products';
+  static const String _logsKey = 'inventory_logs';
   late SharedPreferences _prefs;
   final SyncService _syncService = SyncService();
 
   List<Product> _products = [];
+  List<InventoryLog> _logs = [];
   bool _isSyncing = false;
 
   List<Product> get products => _products;
+  List<InventoryLog> get logs => _logs;
   bool get isSyncing => _isSyncing;
 
   Future<void> initialize() async {
     _prefs = await SharedPreferences.getInstance();
     _loadLocalProducts();
+    _loadLocalLogs();
     // Sincronizar desde la nube en segundo plano
     _syncFromCloud();
   }
@@ -41,6 +46,29 @@ class ProductService extends ChangeNotifier {
   Future<void> _saveLocalProducts() async {
     final json = jsonEncode(_products.map((p) => p.toJson()).toList());
     await _prefs.setString(_key, json);
+  }
+
+  void _loadLocalLogs() {
+    final jsonStr = _prefs.getString(_logsKey);
+    if (jsonStr != null) {
+      final list = jsonDecode(jsonStr) as List;
+      _logs = list.map((e) => InventoryLog.fromJson(e as Map<String, dynamic>)).toList();
+    } else {
+      _logs = [];
+    }
+    _logs.sort((a, b) => b.fechaHora.compareTo(a.fechaHora));
+    notifyListeners();
+  }
+
+  Future<void> _saveLocalLogs() async {
+    final jsonStr = jsonEncode(_logs.map((l) => l.toJson()).toList());
+    await _prefs.setString(_logsKey, jsonStr);
+  }
+
+  Future<void> addLog(InventoryLog log) async {
+    _logs.insert(0, log);
+    await _saveLocalLogs();
+    notifyListeners();
   }
 
   // ──────────────────────────────────────────────
@@ -123,12 +151,30 @@ class ProductService extends ChangeNotifier {
     return _products
         .where((product) =>
             product.nombre.toLowerCase().contains(query.toLowerCase()) ||
-            product.talla.toLowerCase().contains(query.toLowerCase()))
+            (product.categoria != null && product.categoria!.toLowerCase().contains(query.toLowerCase())))
         .toList();
+  }
+
+  List<Product> getFilteredProducts({String query = '', String? talla, String? color}) {
+    return _products.where((product) {
+      final matchQuery = query.isEmpty ||
+          product.nombre.toLowerCase().contains(query.toLowerCase()) ||
+          (product.categoria != null && product.categoria!.toLowerCase().contains(query.toLowerCase()));
+
+      final matchTalla = talla == null || talla.isEmpty ||
+          product.variantes.any((v) => v.talla == talla);
+
+      final matchColor = color == null || color.isEmpty ||
+          product.variantes.any((v) => v.color == color);
+
+      return matchQuery && matchTalla && matchColor;
+    }).toList();
   }
 
   Future<void> clear() async {
     await _prefs.remove(_key);
+    await _prefs.remove(_logsKey);
     _loadLocalProducts();
+    _loadLocalLogs();
   }
 }

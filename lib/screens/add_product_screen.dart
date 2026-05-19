@@ -19,6 +19,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final _nombreController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _precioController = TextEditingController();
+  final _categoriaController = TextEditingController();
 
   late List<Variant> _variantes;
 
@@ -28,6 +29,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     if (widget.product != null) {
       _nombreController.text = widget.product!.nombre;
       _descripcionController.text = widget.product!.descripcion ?? '';
+      _categoriaController.text = widget.product!.categoria ?? '';
       // Formatear precio inicial con puntos de miles
       String priceStr = widget.product!.precio.toInt().toString();
       RegExp reg = RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))');
@@ -43,6 +45,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _nombreController.dispose();
     _descripcionController.dispose();
     _precioController.dispose();
+    _categoriaController.dispose();
     super.dispose();
   }
 
@@ -74,6 +77,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         nombre: _nombreController.text,
         descripcion: _descripcionController.text,
         precio: double.tryParse(_precioController.text.replaceAll('.', '')) ?? 0.0,
+        categoria: _categoriaController.text.trim().isEmpty ? null : _categoriaController.text.trim(),
         variantes: _variantes,
       );
 
@@ -129,6 +133,42 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   prefixIcon: const Icon(Icons.description),
                 ),
                 maxLines: 3,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _categoriaController,
+                decoration: InputDecoration(
+                  labelText: 'Categoría (Opcional, ej. Camisetas, Pantalones)',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  prefixIcon: const Icon(Icons.category),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: ['Camisetas', 'Pantalones', 'Accesorios', 'Calzado', 'Bolsos'].map((cat) {
+                  final isSelected = _categoriaController.text.trim() == cat;
+                  return ChoiceChip(
+                    label: Text(cat),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      setState(() {
+                        if (selected) {
+                          _categoriaController.text = cat;
+                        } else {
+                          _categoriaController.text = '';
+                        }
+                      });
+                    },
+                    selectedColor: Colors.deepPurple.shade100,
+                    checkmarkColor: Colors.deepPurple,
+                    labelStyle: TextStyle(
+                      color: isSelected ? Colors.deepPurple.shade800 : Colors.black87,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  );
+                }).toList(),
               ),
               const SizedBox(height: 16),
               TextFormField(
