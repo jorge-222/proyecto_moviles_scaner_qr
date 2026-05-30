@@ -121,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
 }
 
 class _SocialLoginButton extends StatelessWidget {
-  final IconData icon;
+  final FaIconData icon;
   final String text;
   final Color color;
   final Color textColor;

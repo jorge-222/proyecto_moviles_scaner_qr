@@ -8,6 +8,7 @@ import 'qr_generator_screen.dart';
 import 'qr_scanner_screen.dart';
 import 'update_quantity_screen.dart';
 import 'history_screen.dart';
+import 'dashboard_screen.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -28,7 +29,16 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   final List<String> _tallasDisponibles = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
   final List<String> _coloresDisponibles = [
-    'Rojo', 'Azul', 'Negro', 'Blanco', 'Verde', 'Amarillo', 'Naranja', 'Púrpura', 'Rosa', 'Gris'
+    'Rojo',
+    'Azul',
+    'Negro',
+    'Blanco',
+    'Verde',
+    'Amarillo',
+    'Naranja',
+    'Púrpura',
+    'Rosa',
+    'Gris',
   ];
 
   @override
@@ -37,13 +47,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final List<Widget> pages = [
       _buildInventoryView(context),
       const HistoryScreen(),
+      const DashboardScreen(),
     ];
 
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: pages,
-      ),
+      body: IndexedStack(index: _currentIndex, children: pages),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
@@ -63,6 +71,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
             icon: Icon(Icons.history_outlined),
             activeIcon: Icon(Icons.history),
             label: 'Historial',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_outlined),
+            activeIcon: Icon(Icons.dashboard),
+            label: 'Resumen',
           ),
         ],
       ),
@@ -87,7 +100,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
   Widget _buildInventoryView(BuildContext context) {
     final user = Supabase.instance.client.auth.currentUser;
     final metadata = user?.userMetadata;
-    final String fullName = metadata?['full_name'] ?? metadata?['name'] ?? 'Usuario';
+    final String fullName =
+        metadata?['full_name'] ?? metadata?['name'] ?? 'Usuario';
     final String firstName = fullName.split(' ')[0];
     final String? avatarUrl = metadata?['avatar_url'];
 
@@ -103,6 +117,38 @@ class _InventoryScreenState extends State<InventoryScreen> {
           },
         ),
         actions: [
+          Consumer<ProductService>(
+            builder: (context, productService, child) {
+              final isSyncing = productService.isSyncing;
+              final hasPending = productService.hasPendingSync;
+
+              Widget syncIcon;
+              if (isSyncing) {
+                syncIcon = const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.orange,
+                  ),
+                );
+              } else if (hasPending) {
+                syncIcon = const Icon(Icons.cloud_off, color: Colors.orange);
+              } else {
+                syncIcon = const Icon(Icons.cloud_done, color: Colors.green);
+              }
+
+              return IconButton(
+                icon: syncIcon,
+                tooltip: isSyncing
+                    ? 'Sincronizando...'
+                    : hasPending
+                    ? 'Cambios locales pendientes'
+                    : 'Todos los datos respaldados',
+                onPressed: () => productService.syncNow(),
+              );
+            },
+          ),
           if (avatarUrl != null)
             Padding(
               padding: const EdgeInsets.only(right: 16),
@@ -141,7 +187,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               ],
             ),
           ),
-          
+
           // Botones de acción rápida
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -153,7 +199,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     label: 'Escanear QR',
                     onPressed: () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const QRScannerScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const QRScannerScreen(),
+                      ),
                     ),
                   ),
                 ),
@@ -201,7 +249,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                
+
                 // Dropdowns de Talla y Color
                 Row(
                   children: [
@@ -210,12 +258,22 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         value: _selectedTalla,
                         decoration: InputDecoration(
                           labelText: 'Talla',
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                         items: [
-                          const DropdownMenuItem(value: null, child: Text('Todas')),
-                          ..._tallasDisponibles.map((t) => DropdownMenuItem(value: t, child: Text(t))),
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('Todas'),
+                          ),
+                          ..._tallasDisponibles.map(
+                            (t) => DropdownMenuItem(value: t, child: Text(t)),
+                          ),
                         ],
                         onChanged: (value) {
                           setState(() {
@@ -230,12 +288,22 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         value: _selectedColor,
                         decoration: InputDecoration(
                           labelText: 'Color',
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                         items: [
-                          const DropdownMenuItem(value: null, child: Text('Todos')),
-                          ..._coloresDisponibles.map((c) => DropdownMenuItem(value: c, child: Text(c))),
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('Todos'),
+                          ),
+                          ..._coloresDisponibles.map(
+                            (c) => DropdownMenuItem(value: c, child: Text(c)),
+                          ),
                         ],
                         onChanged: (value) {
                           setState(() {
@@ -261,15 +329,24 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         children: [
                           LinearProgressIndicator(
                             backgroundColor: Colors.deepPurple.withOpacity(0.1),
-                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.deepPurple),
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              Colors.deepPurple,
+                            ),
                           ),
                           Container(
                             width: double.infinity,
                             color: Colors.deepPurple.withOpacity(0.05),
-                            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 6,
+                              horizontal: 16,
+                            ),
                             child: const Row(
                               children: [
-                                Icon(Icons.cloud_upload_outlined, size: 14, color: Colors.deepPurple),
+                                Icon(
+                                  Icons.cloud_upload_outlined,
+                                  size: 14,
+                                  color: Colors.deepPurple,
+                                ),
                                 SizedBox(width: 6),
                                 Text(
                                   'Sincronizando con la nube...',
@@ -344,6 +421,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
     Product product,
     ProductService productService,
   ) {
+    bool hasLowStock = product.variantes.any((v) => v.cantidad <= 3);
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
       elevation: 2,
@@ -358,9 +437,23 @@ class _InventoryScreenState extends State<InventoryScreen> {
           ),
           child: const Icon(Icons.shopping_bag, color: Colors.deepPurple),
         ),
-        title: Text(
-          product.nombre,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                product.nombre,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            if (hasLowStock)
+              const Tooltip(
+                message: 'Alerta de stock bajo',
+                child: Icon(Icons.warning, color: Colors.orange, size: 20),
+              ),
+          ],
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,7 +468,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 ),
                 child: Text(
                   product.categoria!,
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             Text(
@@ -412,7 +508,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Divider(),
-                if (product.descripcion != null && product.descripcion!.isNotEmpty) ...[
+                if (product.descripcion != null &&
+                    product.descripcion!.isNotEmpty) ...[
                   Text(
                     'Descripción: ${product.descripcion}',
                     style: const TextStyle(fontSize: 14),
@@ -421,7 +518,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 ],
                 Text(
                   'Precio: \$${_formatPrice(product.precio)}',
-                  style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 const Row(
@@ -430,21 +530,28 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     SizedBox(width: 8),
                     Text(
                       'Matriz de Stock (Talla × Color)',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
-                
+
                 // ── CONSTRUCCIÓN DE LA MATRIZ (Talla x Color) ──
                 _buildStockMatrix(context, product),
-                
+
                 const SizedBox(height: 8),
                 const Align(
                   alignment: Alignment.centerRight,
                   child: Text(
                     '* Toca un badge de stock para actualizar cantidad o ver su QR',
-                    style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Colors.grey),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.grey,
+                    ),
                   ),
                 ),
               ],
@@ -473,7 +580,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
         return indexA.compareTo(indexB);
       });
 
-    final colores = product.variantes.map((v) => v.color).toSet().toList()..sort();
+    final colores = product.variantes.map((v) => v.color).toSet().toList()
+      ..sort();
 
     return Container(
       decoration: BoxDecoration(
@@ -488,34 +596,47 @@ class _InventoryScreenState extends State<InventoryScreen> {
           headingRowHeight: 44,
           dataRowMinHeight: 52,
           dataRowMaxHeight: 52,
-          headingRowColor: MaterialStateProperty.all(Colors.deepPurple.shade50.withOpacity(0.5)),
+          headingRowColor: MaterialStateProperty.all(
+            Colors.deepPurple.shade50.withOpacity(0.5),
+          ),
           columns: [
             const DataColumn(
               label: Text(
                 'Talla / Color',
-                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.deepPurple,
+                ),
               ),
             ),
-            ...colores.map((c) => DataColumn(
-                  label: Row(
-                    children: [
-                      Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: _colorFromString(c),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.grey.shade400, width: 0.5),
+            ...colores.map(
+              (c) => DataColumn(
+                label: Row(
+                  children: [
+                    Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: _colorFromString(c),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.grey.shade400,
+                          width: 0.5,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        c,
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      c,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurple,
                       ),
-                    ],
-                  ),
-                )),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
           rows: tallas.map((t) {
             return DataRow(
@@ -523,7 +644,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 DataCell(
                   Text(
                     t,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
                 ...colores.map((c) {
@@ -540,10 +664,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   if (variant == null) {
                     return const DataCell(
                       Center(
-                        child: Text(
-                          '-',
-                          style: TextStyle(color: Colors.grey),
-                        ),
+                        child: Text('-', style: TextStyle(color: Colors.grey)),
                       ),
                     );
                   }
@@ -567,13 +688,20 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
                   return DataCell(
                     GestureDetector(
-                      onTap: () => _showVariantActionsMenu(context, product, variant!),
+                      onTap: () =>
+                          _showVariantActionsMenu(context, product, variant!),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: badgeBgColor,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: badgeTextColor.withOpacity(0.3), width: 0.5),
+                          border: Border.all(
+                            color: badgeTextColor.withOpacity(0.3),
+                            width: 0.5,
+                          ),
                         ),
                         child: Text(
                           '${variant.cantidad}',
@@ -596,7 +724,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   // Menú contextual para actualizar cantidad o ver el QR de la variante
-  void _showVariantActionsMenu(BuildContext context, Product product, Variant variant) {
+  void _showVariantActionsMenu(
+    BuildContext context,
+    Product product,
+    Variant variant,
+  ) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -624,7 +756,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     Expanded(
                       child: Text(
                         '${product.nombre}  |  ${variant.talla} - ${variant.color}',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -656,10 +791,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => QRGeneratorScreen(
-                        product: product,
-                        variant: variant,
-                      ),
+                      builder: (context) =>
+                          QRGeneratorScreen(product: product, variant: variant),
                     ),
                   );
                 },

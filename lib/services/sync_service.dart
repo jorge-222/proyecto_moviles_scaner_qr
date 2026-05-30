@@ -51,8 +51,8 @@ class SyncService {
   }
 
   /// Sube (upsert) un producto y todas sus variantes a Supabase.
-  /// Falla silenciosamente si no hay internet.
-  Future<void> pushProduct(Product product) async {
+  /// Retorna true si tuvo éxito, false si no hay internet o falló.
+  Future<bool> pushProduct(Product product) async {
     try {
       await _client.from('products').upsert({
         'id': product.id,
@@ -84,17 +84,22 @@ class SyncService {
 
         await _client.from('variants').insert(variantsData);
       }
+      return true;
     } catch (_) {
       // Falla silenciosamente si no hay internet
+      return false;
     }
   }
 
   /// Elimina un producto de la nube (las variantes se borran por CASCADE).
-  Future<void> deleteProductFromCloud(String productId) async {
+  /// Retorna true si tuvo éxito.
+  Future<bool> deleteProductFromCloud(String productId) async {
     try {
       await _client.from('products').delete().eq('id', productId);
+      return true;
     } catch (_) {
       // Falla silenciosamente
+      return false;
     }
   }
 }
