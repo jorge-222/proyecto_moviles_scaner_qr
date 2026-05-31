@@ -1,6 +1,10 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'config/supabase_config.dart';
+import 'firebase_options.dart';
 import 'services/product_service.dart';
 import 'screens/inventory_screen.dart';
 
@@ -10,6 +14,12 @@ import 'screens/login_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SupabaseConfig.initialize();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true;
+  };
   runApp(const MyApp());
 }
 
@@ -30,6 +40,9 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
         ),
         home: const AuthWrapper(),
+        onUnknownRoute: (settings) => MaterialPageRoute(
+          builder: (context) => const AuthWrapper(),
+        ),
       ),
     );
   }

@@ -96,20 +96,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     textColor: Colors.white,
                     onPressed: () => _handleSocialSignIn(_authService.signInWithGithub),
                   ),
-                  const SizedBox(height: 15),
-
-                  // Botón de Apple (Placeholder)
-                  _SocialLoginButton(
-                    icon: FontAwesomeIcons.apple,
-                    text: 'Continuar con Apple',
-                    color: Colors.white,
-                    textColor: Colors.black,
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Apple Login requiere membresía de desarrollador.')),
-                      );
-                    },
-                  ),
                 ],
               ],
             ),

@@ -1,4 +1,6 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../models/product.dart';
 import '../models/variant.dart';
@@ -24,6 +26,10 @@ class _QRGeneratorScreenState extends State<QRGeneratorScreen> {
   void initState() {
     super.initState();
     _generateQRCode();
+    FirebaseAnalytics.instance.logEvent(
+      name: 'qr_generado',
+      parameters: {'producto': widget.product.nombre},
+    );
   }
 
   void _generateQRCode() {
@@ -158,10 +164,13 @@ class _QRGeneratorScreenState extends State<QRGeneratorScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
+                      onPressed: () async {
+                        final messenger = ScaffoldMessenger.of(context);
+                        await Clipboard.setData(ClipboardData(text: _qrData));
+                        if (!mounted) return;
+                        messenger.showSnackBar(
                           const SnackBar(
-                            content: Text('Código QR generado y guardado'),
+                            content: Text('Código copiado al portapapeles'),
                             duration: Duration(seconds: 2),
                           ),
                         );

@@ -27,7 +27,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
   String? _selectedTalla;
   String? _selectedColor;
 
-  final List<String> _tallasDisponibles = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+  final List<String> _tallasDisponibles = [
+    'XS', 'S', 'M', 'L', 'XL', 'XXL',
+    '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45',
+  ];
   final List<String> _coloresDisponibles = [
     'Rojo',
     'Azul',
@@ -113,7 +116,27 @@ class _InventoryScreenState extends State<InventoryScreen> {
           icon: const Icon(Icons.logout, color: Colors.redAccent),
           tooltip: 'Cerrar Sesión',
           onPressed: () async {
-            await Supabase.instance.client.auth.signOut();
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Cerrar sesión'),
+                content: const Text('¿Seguro que quieres cerrar sesión?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: const Text('Cancelar'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: const Text('Cerrar sesión',
+                        style: TextStyle(color: Colors.red)),
+                  ),
+                ],
+              ),
+            );
+            if (confirm == true) {
+              await Supabase.instance.client.auth.signOut();
+            }
           },
         ),
         actions: [

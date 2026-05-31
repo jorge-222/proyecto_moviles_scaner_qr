@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -53,6 +54,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     showDialog(
       context: context,
       builder: (context) => _VariantDialog(
+        categoria: _categoriaController.text,
         onSave: (talla, color) {
           setState(() {
             _variantes.add(Variant(talla: talla, color: color));
@@ -89,6 +91,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
           );
         } else {
           context.read<ProductService>().addProduct(product);
+          FirebaseAnalytics.instance.logEvent(
+            name: 'producto_agregado',
+            parameters: {
+              'num_variantes': _variantes.length,
+              'categoria': product.categoria ?? 'sin_categoria',
+            },
+          );
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Producto registrado exitosamente')),
           );
@@ -288,9 +297,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
 }
 
 class _VariantDialog extends StatefulWidget {
+  final String categoria;
   final Function(String talla, String color) onSave;
 
-  const _VariantDialog({required this.onSave});
+  const _VariantDialog({required this.categoria, required this.onSave});
 
   @override
   State<_VariantDialog> createState() => _VariantDialogState();
@@ -299,13 +309,25 @@ class _VariantDialog extends StatefulWidget {
 class _VariantDialogState extends State<_VariantDialog> {
   late String _selectedTalla;
   late String _selectedColor;
+  late List<String> _tallas;
 
-  final _tallas = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+  final _tallasLetra = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+  final _tallasNumero = ['35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45'];
   final _colores = ['Rojo', 'Azul', 'Negro', 'Blanco', 'Verde', 'Amarillo', 'Naranja', 'Púrpura', 'Rosa', 'Gris'];
+
+  bool get _esCalzado {
+    final cat = widget.categoria.toLowerCase();
+    return cat.contains('calzado') ||
+        cat.contains('zapato') ||
+        cat.contains('zapatilla') ||
+        cat.contains('tenis') ||
+        cat.contains('bota');
+  }
 
   @override
   void initState() {
     super.initState();
+    _tallas = _esCalzado ? _tallasNumero : _tallasLetra;
     _selectedTalla = _tallas.first;
     _selectedColor = _colores.first;
   }

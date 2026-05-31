@@ -1,7 +1,8 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
-import '../models/product.dart';
 import '../models/variant.dart';
 import '../services/product_service.dart';
 import 'update_quantity_screen.dart';
@@ -46,8 +47,6 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
 
     final productId = parts[0];
     final variantId = parts[1];
-    final talla = parts[2];
-    final color = parts[3];
 
     // Buscar el producto
     final product = productService.getProductById(productId);
@@ -71,17 +70,38 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
       return;
     }
 
+    FirebaseAnalytics.instance.logEvent(
+      name: 'qr_escaneado',
+      parameters: {'producto': product.nombre},
+    );
     // Ir a la pantalla de actualización de cantidad
     Navigator.pop(context);
-    if (variant != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => UpdateQuantityScreen(
-            product: product,
-            variant: variant!,
-          ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => UpdateQuantityScreen(
+          product: product,
+          variant: variant!,
         ),
+      ),
+    );
+  }
+
+  Future<void> _scanFromGallery() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image == null) return;
+
+    final BarcodeCapture? result = await controller.analyzeImage(image.path);
+    if (!mounted) return;
+
+    final code = result?.barcodes.firstOrNull?.rawValue ?? '';
+    if (code.isNotEmpty) {
+      _handleScannedCode(code);
+    } else {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('No se encontró ningún código QR en la imagen')),
       );
     }
   }
@@ -92,6 +112,11 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
       appBar: AppBar(
         title: const Text('Escanear QR'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.photo_library),
+            tooltip: 'Escanear desde una imagen',
+            onPressed: _scanFromGallery,
+          ),
           IconButton(
             color: Colors.white,
             icon: ValueListenableBuilder(

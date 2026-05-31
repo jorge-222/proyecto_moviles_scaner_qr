@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/product.dart';
@@ -89,6 +90,13 @@ class _UpdateQuantityScreenState extends State<UpdateQuantityScreen> {
       nota: logNote,
     );
     productService.addLog(log);
+    FirebaseAnalytics.instance.logEvent(
+      name: 'inventario_actualizado',
+      parameters: {
+        'tipo': transactionType,
+        'cantidad': amount,
+      },
+    );
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
